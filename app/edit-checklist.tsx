@@ -35,7 +35,7 @@ const INITIAL_CHECKLIST_DATA: ChecklistSection[] = [
     id: "before-flight",
     title: "Before flight",
     items: [
-      { id: "b1", text: "Call CA", checked: true, requiresCall: true, phoneNumber: "+1234567890" },
+      { id: "b1", text: "Call CA", checked: true, requiresCall: true, phoneNumber: "+14244096387" },
       { id: "b2", text: "Check Slack messages", checked: true },
       { id: "b3", text: "VOR/ Scale check", checked: true },
       { id: "b4", text: "Passengers verified", checked: true },
