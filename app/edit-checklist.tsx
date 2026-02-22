@@ -9,6 +9,7 @@ import { Stack, useRouter } from "expo-router";
 interface ChecklistItem {
   id: string;
   text: string;
+  checked: boolean;
   requiresCall?: boolean;
   phoneNumber?: string;
 }
@@ -22,55 +23,43 @@ interface ChecklistSection {
 const INITIAL_CHECKLIST_DATA: ChecklistSection[] = [
   {
     id: "planning",
-    title: "1. Planning Stage",
+    title: "Planning stage",
     items: [
-      { id: "p1", text: "Review flight plan and weather conditions" },
-      { id: "p2", text: "Check NOTAMs and TFRs" },
-      { id: "p3", text: "Verify fuel requirements and availability" },
-      { id: "p4", text: "Confirm passenger manifest" },
-      { id: "p5", text: "Call Client Assurance", requiresCall: true, phoneNumber: "+1234567890" },
-      { id: "p6", text: "File flight plan" },
-      { id: "p7", text: "Calculate weight and balance" },
+      { id: "p1", text: "Gendec", checked: false },
+      { id: "p2", text: "FRAT", checked: true },
+      { id: "p3", text: "Trip sheet", checked: true },
+      { id: "p4", text: "Flight plan", checked: true },
     ],
   },
   {
     id: "before-flight",
-    title: "2. Before Flight",
+    title: "Before flight",
     items: [
-      { id: "b1", text: "Complete pre-flight inspection" },
-      { id: "b2", text: "Check aircraft documents" },
-      { id: "b3", text: "Verify fuel quantity and quality" },
-      { id: "b4", text: "Test flight controls" },
-      { id: "b5", text: "Set altimeter and instruments" },
-      { id: "b6", text: "Brief passengers on safety procedures" },
-      { id: "b7", text: "Secure all cargo and baggage" },
-      { id: "b8", text: "Obtain clearance from ATC" },
+      { id: "b1", text: "Call CA", checked: true, requiresCall: true, phoneNumber: "+1234567890" },
+      { id: "b2", text: "Check Slack messages", checked: true },
+      { id: "b3", text: "VOR/ Scale check", checked: true },
+      { id: "b4", text: "Passengers verified", checked: true },
+      { id: "b5", text: "MX Status/MELs", checked: true },
+      { id: "b6", text: "Tier 1 release", checked: true },
+      { id: "b7", text: "W&B", checked: true },
     ],
   },
   {
     id: "mid-flight",
-    title: "3. Mid Flight",
+    title: "Mid-flight",
     items: [
-      { id: "m1", text: "Monitor fuel consumption" },
-      { id: "m2", text: "Check engine parameters" },
-      { id: "m3", text: "Maintain communication with ATC" },
-      { id: "m4", text: "Update weather information" },
-      { id: "m5", text: "Monitor navigation systems" },
-      { id: "m6", text: "Check passenger comfort" },
-      { id: "m7", text: "Log flight time and waypoints" },
+      { id: "m1", text: "Contact FBO", checked: false },
+      { id: "m2", text: "Expenses", checked: false },
     ],
   },
   {
-    id: "after-flight",
-    title: "4. After Flight",
+    id: "after-landing",
+    title: "After landing",
     items: [
-      { id: "a1", text: "Complete shutdown checklist" },
-      { id: "a2", text: "Secure aircraft" },
-      { id: "a3", text: "Log flight hours and discrepancies" },
-      { id: "a4", text: "Report any maintenance issues" },
-      { id: "a5", text: "Debrief passengers" },
-      { id: "a6", text: "Complete post-flight paperwork" },
-      { id: "a7", text: "Arrange fuel and servicing" },
+      { id: "a1", text: "Slack summary", checked: false },
+      { id: "a2", text: "Log flight", checked: false },
+      { id: "a3", text: "Log MX issues", checked: false },
+      { id: "a4", text: "Call CA", checked: false, requiresCall: true, phoneNumber: "+1234567890" },
     ],
   },
 ];
@@ -78,7 +67,6 @@ const INITIAL_CHECKLIST_DATA: ChecklistSection[] = [
 export default function EditChecklistScreen() {
   const router = useRouter();
   const [sections, setSections] = useState<ChecklistSection[]>(INITIAL_CHECKLIST_DATA);
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   const handleBack = () => {
     console.log("User tapped Back button");

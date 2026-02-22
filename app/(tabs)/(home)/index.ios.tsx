@@ -9,6 +9,7 @@ import { Stack, useRouter } from "expo-router";
 interface ChecklistItem {
   id: string;
   text: string;
+  checked: boolean;
   requiresCall?: boolean;
   phoneNumber?: string;
 }
@@ -22,78 +23,69 @@ interface ChecklistSection {
 const CHECKLIST_DATA: ChecklistSection[] = [
   {
     id: "planning",
-    title: "1. Planning Stage",
+    title: "Planning stage",
     items: [
-      { id: "p1", text: "Review flight plan and weather conditions" },
-      { id: "p2", text: "Check NOTAMs and TFRs" },
-      { id: "p3", text: "Verify fuel requirements and availability" },
-      { id: "p4", text: "Confirm passenger manifest" },
-      { id: "p5", text: "Call Client Assurance", requiresCall: true, phoneNumber: "+1234567890" },
-      { id: "p6", text: "File flight plan" },
-      { id: "p7", text: "Calculate weight and balance" },
+      { id: "p1", text: "Gendec", checked: false },
+      { id: "p2", text: "FRAT", checked: true },
+      { id: "p3", text: "Trip sheet", checked: true },
+      { id: "p4", text: "Flight plan", checked: true },
     ],
   },
   {
     id: "before-flight",
-    title: "2. Before Flight",
+    title: "Before flight",
     items: [
-      { id: "b1", text: "Complete pre-flight inspection" },
-      { id: "b2", text: "Check aircraft documents" },
-      { id: "b3", text: "Verify fuel quantity and quality" },
-      { id: "b4", text: "Test flight controls" },
-      { id: "b5", text: "Set altimeter and instruments" },
-      { id: "b6", text: "Brief passengers on safety procedures" },
-      { id: "b7", text: "Secure all cargo and baggage" },
-      { id: "b8", text: "Obtain clearance from ATC" },
+      { id: "b1", text: "Call CA", checked: true, requiresCall: true, phoneNumber: "+1234567890" },
+      { id: "b2", text: "Check Slack messages", checked: true },
+      { id: "b3", text: "VOR/ Scale check", checked: true },
+      { id: "b4", text: "Passengers verified", checked: true },
+      { id: "b5", text: "MX Status/MELs", checked: true },
+      { id: "b6", text: "Tier 1 release", checked: true },
+      { id: "b7", text: "W&B", checked: true },
     ],
   },
   {
     id: "mid-flight",
-    title: "3. Mid Flight",
+    title: "Mid-flight",
     items: [
-      { id: "m1", text: "Monitor fuel consumption" },
-      { id: "m2", text: "Check engine parameters" },
-      { id: "m3", text: "Maintain communication with ATC" },
-      { id: "m4", text: "Update weather information" },
-      { id: "m5", text: "Monitor navigation systems" },
-      { id: "m6", text: "Check passenger comfort" },
-      { id: "m7", text: "Log flight time and waypoints" },
+      { id: "m1", text: "Contact FBO", checked: false },
+      { id: "m2", text: "Expenses", checked: false },
     ],
   },
   {
-    id: "after-flight",
-    title: "4. After Flight",
+    id: "after-landing",
+    title: "After landing",
     items: [
-      { id: "a1", text: "Complete shutdown checklist" },
-      { id: "a2", text: "Secure aircraft" },
-      { id: "a3", text: "Log flight hours and discrepancies" },
-      { id: "a4", text: "Report any maintenance issues" },
-      { id: "a5", text: "Debrief passengers" },
-      { id: "a6", text: "Complete post-flight paperwork" },
-      { id: "a7", text: "Arrange fuel and servicing" },
+      { id: "a1", text: "Slack summary", checked: false },
+      { id: "a2", text: "Log flight", checked: false },
+      { id: "a3", text: "Log MX issues", checked: false },
+      { id: "a4", text: "Call CA", checked: false, requiresCall: true, phoneNumber: "+1234567890" },
     ],
   },
 ];
 
 export default function FlightChecklistScreen() {
   const router = useRouter();
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [sections, setSections] = useState<ChecklistSection[]>(CHECKLIST_DATA);
 
-  const toggleItem = (itemId: string) => {
+  const toggleItem = (sectionId: string, itemId: string) => {
     console.log("User toggled checklist item:", itemId);
-    setCheckedItems((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
-      return newSet;
-    });
+    setSections((prevSections) =>
+      prevSections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              items: section.items.map((item) =>
+                item.id === itemId ? { ...item, checked: !item.checked } : item
+              ),
+            }
+          : section
+      )
+    );
   };
 
   const handleCallPress = (phoneNumber: string) => {
-    console.log("User tapped Call Client Assurance button, phone:", phoneNumber);
+    console.log("User tapped Call CA button, phone:", phoneNumber);
     const phoneUrl = `tel:${phoneNumber}`;
 
     Linking.canOpenURL(phoneUrl)
@@ -110,7 +102,10 @@ export default function FlightChecklistScreen() {
 
   const handleReset = () => {
     console.log("User tapped Reset button");
-    setCheckedItems(new Set());
+    setSections(CHECKLIST_DATA.map(section => ({
+      ...section,
+      items: section.items.map(item => ({ ...item, checked: false }))
+    })));
   };
 
   const handleEditPress = () => {
@@ -119,20 +114,22 @@ export default function FlightChecklistScreen() {
   };
 
   const getSectionProgress = (section: ChecklistSection) => {
-    const checkedCount = section.items.filter((item) => checkedItems.has(item.id)).length;
+    const checkedCount = section.items.filter((item) => item.checked).length;
     const totalCount = section.items.length;
     return { checkedCount, totalCount };
   };
 
   const getTotalProgress = () => {
-    const totalItems = CHECKLIST_DATA.reduce((sum, section) => sum + section.items.length, 0);
-    const checkedCount = checkedItems.size;
+    const totalItems = sections.reduce((sum, section) => sum + section.items.length, 0);
+    const checkedCount = sections.reduce((sum, section) => 
+      sum + section.items.filter(item => item.checked).length, 0
+    );
     return { checkedCount, totalItems };
   };
 
   const getSortedItems = (section: ChecklistSection) => {
-    const unchecked = section.items.filter((item) => !checkedItems.has(item.id));
-    const checked = section.items.filter((item) => checkedItems.has(item.id));
+    const unchecked = section.items.filter((item) => !item.checked);
+    const checked = section.items.filter((item) => item.checked);
     return [...unchecked, ...checked];
   };
 
@@ -204,7 +201,7 @@ export default function FlightChecklistScreen() {
 
       {/* Checklist Sections */}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {CHECKLIST_DATA.map((section) => {
+        {sections.map((section) => {
           const sectionProgress = getSectionProgress(section);
           const sortedItems = getSortedItems(section);
 
@@ -220,13 +217,13 @@ export default function FlightChecklistScreen() {
               </View>
 
               {sortedItems.map((item) => {
-                const isChecked = checkedItems.has(item.id);
+                const isChecked = item.checked;
 
                 return (
                   <View key={item.id} style={styles.itemContainer}>
                     <TouchableOpacity
                       style={styles.checkboxContainer}
-                      onPress={() => toggleItem(item.id)}
+                      onPress={() => toggleItem(section.id, item.id)}
                       activeOpacity={0.7}
                     >
                       <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
