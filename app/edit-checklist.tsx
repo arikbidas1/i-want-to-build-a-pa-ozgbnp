@@ -59,7 +59,7 @@ const INITIAL_CHECKLIST_DATA: ChecklistSection[] = [
       { id: "a1", text: "Slack summary", checked: false },
       { id: "a2", text: "Log flight", checked: false },
       { id: "a3", text: "Log MX issues", checked: false },
-      { id: "a4", text: "Call CA", checked: false, requiresCall: true, phoneNumber: "+1234567890" },
+      { id: "a4", text: "Call CA", checked: false, requiresCall: true, phoneNumber: "+14244096387" },
     ],
   },
 ];
