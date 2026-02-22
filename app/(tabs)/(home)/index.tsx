@@ -4,7 +4,7 @@ import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Linking, Platform
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/IconSymbol";
 import { colors } from "@/styles/commonStyles";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 
 interface ChecklistItem {
   id: string;
@@ -76,6 +76,7 @@ const CHECKLIST_DATA: ChecklistSection[] = [
 ];
 
 export default function FlightChecklistScreen() {
+  const router = useRouter();
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
   const toggleItem = (itemId: string) => {
@@ -113,6 +114,16 @@ export default function FlightChecklistScreen() {
     }
   };
 
+  const handleReset = () => {
+    console.log("User tapped Reset button");
+    setCheckedItems(new Set());
+  };
+
+  const handleEditPress = () => {
+    console.log("User tapped Edit button, navigating to edit screen");
+    router.push("/edit-checklist");
+  };
+
   const getSectionProgress = (section: ChecklistSection) => {
     const checkedCount = section.items.filter((item) => checkedItems.has(item.id)).length;
     const totalCount = section.items.length;
@@ -123,6 +134,12 @@ export default function FlightChecklistScreen() {
     const totalItems = CHECKLIST_DATA.reduce((sum, section) => sum + section.items.length, 0);
     const checkedCount = checkedItems.size;
     return { checkedCount, totalItems };
+  };
+
+  const getSortedItems = (section: ChecklistSection) => {
+    const unchecked = section.items.filter((item) => !checkedItems.has(item.id));
+    const checked = section.items.filter((item) => checkedItems.has(item.id));
+    return [...unchecked, ...checked];
   };
 
   const totalProgress = getTotalProgress();
@@ -148,6 +165,18 @@ export default function FlightChecklistScreen() {
             color={colors.primary}
           />
           <Text style={styles.headerTitle}>Part 135 Flight Checklist</Text>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={handleEditPress}
+            activeOpacity={0.7}
+          >
+            <IconSymbol
+              ios_icon_name="pencil"
+              android_material_icon_name="edit"
+              size={24}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
         </View>
         
         {/* Progress Bar */}
@@ -162,15 +191,28 @@ export default function FlightChecklistScreen() {
             <Text style={styles.progressLabel}>completed</Text>
           </View>
         </View>
+
+        {/* Reset Button */}
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={handleReset}
+          activeOpacity={0.7}
+        >
+          <IconSymbol
+            ios_icon_name="arrow.counterclockwise"
+            android_material_icon_name="refresh"
+            size={20}
+            color="#FFFFFF"
+          />
+          <Text style={styles.resetButtonText}>Reset All</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Checklist Sections */}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {CHECKLIST_DATA.map((section) => {
           const sectionProgress = getSectionProgress(section);
-          const sectionPercentage = section.items.length > 0
-            ? Math.round((sectionProgress.checkedCount / sectionProgress.totalCount) * 100)
-            : 0;
+          const sortedItems = getSortedItems(section);
 
           return (
             <View key={section.id} style={styles.section}>
@@ -183,7 +225,7 @@ export default function FlightChecklistScreen() {
                 </View>
               </View>
 
-              {section.items.map((item) => {
+              {sortedItems.map((item) => {
                 const isChecked = checkedItems.has(item.id);
 
                 return (
@@ -261,8 +303,17 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
+  editButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.highlight,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   progressContainer: {
     width: "100%",
+    marginBottom: 12,
   },
   progressBar: {
     height: 8,
@@ -296,6 +347,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     marginLeft: 6,
+  },
+  resetButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.secondary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  resetButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   scrollView: {
     flex: 1,
